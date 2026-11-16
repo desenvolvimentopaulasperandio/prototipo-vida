@@ -126,6 +126,8 @@ strong{font-weight:600}
 .ticket dt{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted-d)}
 .ticket dd{font-family:var(--serif);font-size:20px;text-align:right}
 .ticket .price{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;padding-top:22px}
+.ticket .price b{font-variant-numeric:tabular-nums;transition:color .4s}
+.ticket .price b.falling{color:var(--gold-l)}
 .ticket .pv{display:inline-flex;align-items:baseline;gap:12px;margin-left:auto}
 .de{font-family:var(--sans);font-size:clamp(18px,5vw,24px);font-weight:500;letter-spacing:.02em;color:var(--muted-d);opacity:.75;text-decoration:line-through;text-decoration-thickness:1.5px}
 .ticket .lote-w{margin-top:14px;text-align:center}
@@ -594,6 +596,26 @@ details p{padding:0 0 30px;color:var(--muted);max-width:680px}
   [E.dataExtenso, E.gratuito?'Ao vivo gratuito':'Ao vivo'].forEach(function(t){ var c=document.createElement('span'); c.className='hchip'; c.textContent=t; hc.appendChild(c); });
   $('#hero-cta-txt').textContent=E.gratuito?'Quero garantir minha vaga gratuita':'QUERO GARANTIR MINHA VAGA NO AULÃO';
   $('#hero-micro').textContent='O link de acesso chega no seu WhatsApp e e-mail'+(E.vagasLimitadas?' · Vagas limitadas':'');
+
+  /* ---------- Preço do Ingresso: número "caindo" de R$97 para R$47 ao entrar na tela ---------- */
+  (function(){
+    var pb=$('.ingresso .price b'), to=parseInt(String(EV.preco).replace(/\D/g,''),10), from=parseInt(String(EV.precoDe).replace(/\D/g,''),10);
+    if(!pb||!to||!from||from<=to||!window.IntersectionObserver||matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    var pre=String(EV.preco).replace(/\d.*$/,''), dur=1500, done=false;
+    function fmt(n){ return pre+Math.round(n); }
+    pb.textContent=fmt(from); pb.classList.add('falling');
+    new IntersectionObserver(function(es,o){ es.forEach(function(e){
+      if(!e.isIntersecting||done) return; done=true; o.disconnect();
+      setTimeout(function(){
+        var t0=performance.now();
+        (function step(t){
+          var k=Math.min(1,(t-t0)/dur), v=from-(from-to)*(1-Math.pow(1-k,3));
+          pb.textContent=fmt(v);
+          if(k<1) requestAnimationFrame(step); else { pb.textContent=EV.preco; pb.classList.remove('falling'); }
+        })(t0);
+      },350);
+    }); },{threshold:.6}).observe(pb);
+  })();
 
   /* ---------- UTMs → checkout ---------- */
   /* UTMs: src/lib/tracking/utm.js (sessionStorage). fbclid segue só para o checkout. */
